@@ -1,0 +1,36 @@
+name: Docker Run
+description:  Run steps using docker
+author: tj-actions
+inputs:
+  image:
+    description: 'Docker image'
+    required: true
+  name:
+    description: 'Container name'
+    required: true
+  args:
+    description: 'Command to run'
+    required: false
+  options:
+    description: 'Options to pass to docker run'
+    required: false
+    default: ''
+
+outputs:
+  container-id:
+    description: 'Container ID'
+    value: ${{ steps.docker-run.outputs.container_id }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Docker Run
+      id: docker-run
+      shell: bash
+      run: |
+        docker run -v "/var/run/docker.sock":"/var/run/docker.sock" --name ${{ inputs.name }} ${{ inputs.options }} ${{ inputs.image }} ${{ inputs.args }}
+        echo "container_id=$(docker ps -a --filter name=${{ inputs.name }} -q)" >> "$GITHUB_OUTPUT"
+
+branding:
+  icon: refresh-cw
+  color: white
