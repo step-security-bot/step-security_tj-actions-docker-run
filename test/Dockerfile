@@ -1,6 +1,6 @@
 FROM alpine:3.17.1
 
-LABEL maintainer="Tonye Jack <jtonye@ymail.com>"
+LABEL maintainer="step-security"
 
 RUN apk add bash
 
