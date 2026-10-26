@@ -15,16 +15,16 @@ GitHub action to run steps using docker
 ```yaml
 ...
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2.1.0
+        uses: step-security/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2.2.1
+        uses: step-security/setup-buildx-action@v4
 
       - name: Build
-        uses: docker/build-push-action@v3
+        uses: step-security/docker-build-push-action@v7
         with:
           context: .
           load: true
@@ -45,7 +45,7 @@ GitHub action to run steps using docker
 ```yaml
 ...
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
       
       - name: Run ubuntu from dockerhub
         uses: step-security/tj-actions-docker-run@v2
@@ -79,16 +79,6 @@ GitHub action to run steps using docker
 
 <!-- AUTO-DOC-OUTPUT:END -->
 
-*   Free software: [MIT license](LICENSE)
-
-If you feel generous and want to show some extra appreciation:
-
-[![Buy me a coffee][buymeacoffee-shield]][buymeacoffee]
-
-[buymeacoffee]: https://www.buymeacoffee.com/jackton1
-
-[buymeacoffee-shield]: https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png
-
 ## Credits
 
 This package was created with [Cookiecutter](https://github.com/cookiecutter/cookiecutter) using [cookiecutter-action](https://github.com/tj-actions/cookiecutter-action)
@@ -102,3 +92,4 @@ If you are reporting a bug, please include:
 *   Your operating system name and version.
 *   Any details about your workflow that might be helpful in troubleshooting.
 *   Detailed steps to reproduce the bug.
+
