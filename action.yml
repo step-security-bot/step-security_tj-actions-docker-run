@@ -1,0 +1,85 @@
+name: Docker Run
+description:  Run steps using docker
+author: 'step-security'
+inputs:
+  image:
+    description: 'Docker image'
+    required: true
+  name:
+    description: 'Container name'
+    required: true
+  args:
+    description: 'Command to run'
+    required: false
+  options:
+    description: 'Options to pass to docker run'
+    required: false
+    default: ''
+
+outputs:
+  container-id:
+    description: 'Container ID'
+    value: ${{ steps.docker-run.outputs.container_id }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Subscription check
+      env:
+        REPO_PRIVATE: ${{ github.event.repository.private }}
+      run: |
+        # validate subscription status
+        UPSTREAM="tj-actions/docker-run"
+        ACTION_REPO="${GITHUB_ACTION_REPOSITORY:-}"
+        DOCS_URL="https://docs.stepsecurity.io/actions/stepsecurity-maintained-actions"
+
+        echo ""
+        echo -e "\033[1;36mStepSecurity Maintained Action\033[0m"
+        echo "Secure drop-in replacement for $UPSTREAM"
+        if [ "$REPO_PRIVATE" = "false" ]; then
+          echo -e "\033[32m✓ Free for public repositories\033[0m"
+        fi
+        echo -e "\033[36mLearn more:\033[0m $DOCS_URL"
+        echo ""
+
+        if [ "$REPO_PRIVATE" != "false" ]; then
+          SERVER_URL="${GITHUB_SERVER_URL:-https://github.com}"
+
+          if [ "$SERVER_URL" != "https://github.com" ]; then
+            BODY=$(printf '{"action":"%s","ghes_server":"%s"}' "$ACTION_REPO" "$SERVER_URL")
+          else
+            BODY=$(printf '{"action":"%s"}' "$ACTION_REPO")
+          fi
+
+          API_URL="https://agent.api.stepsecurity.io/v1/github/$GITHUB_REPOSITORY/actions/maintained-actions-subscription"
+
+          RESPONSE=$(curl --max-time 3 -s -w "%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            "$API_URL" -o /dev/null) && CURL_EXIT_CODE=0 || CURL_EXIT_CODE=$?
+
+          if [ $CURL_EXIT_CODE -ne 0 ]; then
+            echo "Timeout or API not reachable. Continuing to next step."
+          elif [ "$RESPONSE" = "403" ]; then
+            echo -e "::error::\033[1;31mThis action requires a StepSecurity subscription for private repositories.\033[0m"
+            echo -e "::error::\033[31mLearn how to enable a subscription: $DOCS_URL\033[0m"
+            exit 1
+          fi
+        fi
+      shell: bash
+    - name: Docker Run
+      id: docker-run
+      shell: bash
+      run: |
+        # inputs.name, inputs.image, inputs.options, inputs.args are intentionally interpolated directly.
+        # Callers are responsible for ensuring these values come from trusted sources.
+        # Passing untrusted external data (e.g. PR titles, issue bodies) into these inputs is a caller-side risk.
+        # CWE-78 (OS Command Injection) and CWE-94 (Code Injection): accepted trade-off — shell quote parsing
+        # required for args like `bash -c '...'` cannot coexist with env-var isolation.
+        docker run -v "/var/run/docker.sock":"/var/run/docker.sock" --name ${{ inputs.name }} ${{ inputs.options }} ${{ inputs.image }} ${{ inputs.args }}
+        echo "container_id=$(docker ps -a --filter name=${{ inputs.name }} -q)" >> "$GITHUB_OUTPUT"
+
+branding:
+  icon: refresh-cw
+  color: white
